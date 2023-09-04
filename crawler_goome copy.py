@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import pandas as pd
 
-def coleta_url_titulo(consulta:str="site:goomer.app+inurl:https://*&hl=pt-BR"):
+def coleta_url_titulo(consulta:str="site:goomer.app inurl:https://*"):
     # Inicia o navegador e página
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -20,8 +20,8 @@ def coleta_url_titulo(consulta:str="site:goomer.app+inurl:https://*&hl=pt-BR"):
         page.goto("https://www.google.com")
 
         # Digita e pesquisa o valor procurado
-        page.fill("input[name=q]", consulta)
-        page.press("input[name=q]","Enter")
+        page.fill("textarea[name=q]", consulta)
+        page.press("textarea[name=q]","Enter")
         
         # Dicionário com os campos a serem consumidos no crawler
         resultado = {"url" : [], "titulo": []}
@@ -31,16 +31,14 @@ def coleta_url_titulo(consulta:str="site:goomer.app+inurl:https://*&hl=pt-BR"):
 
         # Loop para passar de página em página do resultdo da pesquisa
         while True:
-            page.wait_for_selector("#search")
-
             # Pega os links e títulos dos resultadso
-            links = page.query_selector_all("#search a")
+            links = page.query_selector_all('[role="presentation"]')
             for link in links:
                 url = link.get_attribute("href")
                 titulo = link.inner_text()
                 if url and titulo:
                     resultado["url"].append(url) ,resultado["titulo"].append(titulo)
-            
+                    break
             # Verifica se há um botão para próxima página
             proxima_pagina = page.query_selector("#pnnext")
             if proxima_pagina:
